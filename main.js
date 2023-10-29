@@ -336,7 +336,8 @@ async function main() {
             meshIndexTex: { value: meshIndexTex },
             materials: { value: null },
             mapSize: { value: TARGET_SIZE_X },
-            time: { value: 0.0 }
+            time: { value: 0.0 },
+            meshDataTexture: { value: null }
         },
         vertexShader: /*glsl*/ `
         varying vec2 vUv;
@@ -655,9 +656,7 @@ async function main() {
         #define MAX_MATERIALS 64
         uniform MaterialInfo materials[MAX_MATERIALS];
         #define MAX_MESHES ${MAX_MESHES}
-        uniform MeshData {
-            mat4 worldMatrices[MAX_MESHES];
-        };
+        uniform sampler2D meshDataTexture;
         float dot2( in vec3 v ) { return dot(v,v); }
 float maxcomp( in vec2 v ) { return max(v.x,v.y); }
 precision highp isampler2D;
@@ -743,7 +742,12 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
             } else {
                 int meshIndex = sample1Dimi(meshIndexTex, sampledIndex, posSize).r;
-                mat4 worldMatrix = worldMatrices[meshIndex];
+                mat4 worldMatrix = mat4(
+                    texture(meshDataTexture, vec2((meshIndex + 0) / MAX_MESHES, 0)),
+                    texture(meshDataTexture, vec2((meshIndex + 1) / MAX_MESHES, 0)),
+                    texture(meshDataTexture, vec2((meshIndex + 2) / MAX_MESHES, 0)),
+                    texture(meshDataTexture, vec2((meshIndex + 3) / MAX_MESHES, 0))
+                );
                 // Compute normal matrix by normalizing the rotation part of the world matrix
                 mat3 normalMatrix = transpose(mat3(inverse(worldMatrix)));
                vec3 posA =(worldMatrix * vec4(sample1Dim(posTex, sampledIndex * 3, posSize).xyz, 1.0)).xyz;
@@ -834,13 +838,20 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         }
         `
     }));
-    const meshData = new THREE.UniformsGroup();
-    meshData.setName("MeshData");
-    const meshMatrixArray = Array(MAX_MESHES).fill(new THREE.Matrix4());
-    meshData.add(new THREE.Uniform(meshMatrixArray));
 
-    voxelColorShader.material.uniformsGroups = [meshData];
     voxelColorShader.material.uniforms["materials"].value = materialInfo;
+
+    const meshMatrixArray = new Float32Array(MAX_MESHES * 16);
+
+    const identity = new THREE.Matrix4();
+    for (let i = 0; i < MAX_MESHES; i ++) {
+      identity.toArray(meshMatrixArray, i * 16);
+    }
+
+    const meshDataTexture = new THREE.DataTexture(meshMatrixArray, MAX_MESHES * 4, 4);
+    meshDataTexture.type = THREE.FloatType
+    meshDataTexture.needsUpdate = true; // r136
+    voxelColorShader.material.uniforms.meshDataTexture.value = meshDataTexture;
 
 
 
@@ -1001,14 +1012,24 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
             child.updateMatrixWorld();
             const indices = child.geometry.index.array;
             const posArray = child.geometry.attributes.position.array;
-            const transform = child.matrixWorld;
-            meshMatrixArray[child.meshIndex].copy(transform);
-            const [
-                e0, e1, e2, e3,
-                e4, e5, e6, e7,
-                e8, e9, e10, e11,
-                e12, e13, e14, e15
-            ] = transform.elements;
+
+            const e0 = meshMatrixArray[child.meshIndex * 16 + 0]
+            const e1 = meshMatrixArray[child.meshIndex * 16 + 1]
+            const e2 = meshMatrixArray[child.meshIndex * 16 + 2]
+            const e3 = meshMatrixArray[child.meshIndex * 16 + 3]
+            const e4 = meshMatrixArray[child.meshIndex * 16 + 4]
+            const e5 = meshMatrixArray[child.meshIndex * 16 + 5]
+            const e6 = meshMatrixArray[child.meshIndex * 16 + 6]
+            const e7 = meshMatrixArray[child.meshIndex * 16 + 7]
+            const e8 = meshMatrixArray[child.meshIndex * 16 + 8]
+            const e9 = meshMatrixArray[child.meshIndex * 16 + 9]
+            const e10 = meshMatrixArray[child.meshIndex * 16 + 10]
+            const e11 = meshMatrixArray[child.meshIndex * 16 + 11]
+            const e12 = meshMatrixArray[child.meshIndex * 16 + 12]
+            const e13 = meshMatrixArray[child.meshIndex * 16 + 13]
+            const e14 = meshMatrixArray[child.meshIndex * 16 + 14]
+            const e15 = meshMatrixArray[child.meshIndex * 16 + 15]
+
             const iLen = indices.length;
             for (let j = 0; j < iLen; j++) {
                 const i = indices[j];
@@ -1025,7 +1046,7 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
                 posBufferAux[posBufferCount++] = 1.0;
             }
         }
-        meshData.needsUpdate = true;
+        meshDataTexture.needsUpdate = true;
 
         const posArray = posBufferAux.slice(0, posBufferCount);
 
@@ -1169,8 +1190,6 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         effectPass.uniforms["voxelTexture"].value = indexTex;
         effectPass.uniforms["voxelColor"].value = voxelRenderTarget.texture;
         effectPass.uniforms["voxelColorTextureSize"].value = voxelRenderTargetSize;
-        effectPass.uniforms["projMat"].value = camera.projectionMatrix;
-        effectPass.uniforms["viewMat"].value = camera.matrixWorldInverse;
         effectPass.uniforms["projectionMatrixInv"].value = camera.projectionMatrixInverse;
         effectPass.uniforms["viewMatrixInv"].value = camera.matrixWorld;
         effectPass.uniforms["cameraPos"].value = camera.getWorldPosition(new THREE.Vector3());

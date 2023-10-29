@@ -9,8 +9,6 @@ const EffectShader = {
         'sceneAlbedo': { value: null },
         'bluenoise': { value: null },
         'skybox': { value: null },
-        'projMat': { value: new THREE.Matrix4() },
-        'viewMat': { value: new THREE.Matrix4() },
         'projectionMatrixInv': { value: new THREE.Matrix4() },
         'viewMatrixInv': { value: new THREE.Matrix4() },
         'cameraPos': { value: new THREE.Vector3() },
@@ -44,8 +42,6 @@ const EffectShader = {
     uniform highp samplerCube skybox;
     uniform highp sampler2D voxelColor;
     uniform int voxelColorTextureSize;
-    uniform mat4 projMat;
-    uniform mat4 viewMat;
     uniform highp mat4 projectionMatrixInv;
     uniform highp mat4 viewMatrixInv;
     uniform vec3 voxelAmount;
