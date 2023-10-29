@@ -742,10 +742,10 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
             } else {
                 int meshIndex = sample1Dimi(meshIndexTex, sampledIndex, posSize).r;
                 mat4 worldMatrix = mat4(
-                    texture(meshDataTexture, vec2((meshIndex + 0) / MAX_MESHES, 0)),
-                    texture(meshDataTexture, vec2((meshIndex + 1) / MAX_MESHES, 0)),
-                    texture(meshDataTexture, vec2((meshIndex + 2) / MAX_MESHES, 0)),
-                    texture(meshDataTexture, vec2((meshIndex + 3) / MAX_MESHES, 0))
+                    texelFetch(meshDataTexture, ivec2(meshIndex * 4 + 0, 0), 0),
+                    texelFetch(meshDataTexture, ivec2(meshIndex * 4 + 1, 0), 0),
+                    texelFetch(meshDataTexture, ivec2(meshIndex * 4 + 2, 0), 0),
+                    texelFetch(meshDataTexture, ivec2(meshIndex * 4 + 3, 0), 0)
                 );
                 // Compute normal matrix by normalizing the rotation part of the world matrix
                 mat3 normalMatrix = transpose(mat3(inverse(worldMatrix)));
@@ -788,9 +788,9 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
 
                 // Get texture
                 vec2 uv = vec2(interpolatedUV.x, interpolatedUV.y);
-                vec4 materialInfo1 = texture(materialDataTexture, vec2((materialIndex + 0) / 64, 0));
-                vec4 materialInfo2 = texture(materialDataTexture, vec2((materialIndex + 1) / 64, 0));
-                vec4 materialInfo3 = texture(materialDataTexture, vec2((materialIndex + 2) / 64, 0));
+                vec4 materialInfo1 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 0, 0), 0);
+                vec4 materialInfo2 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 1, 0), 0);
+                vec4 materialInfo3 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 2, 0), 0);
                 float metalness = materialInfo1.r;
                 float roughness = materialInfo1.g;
                 float mapIndex = materialInfo1.b;
