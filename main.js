@@ -841,7 +841,7 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         `
     }));
 
-    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), 64, 1);
+    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), 64 * 3, 1);
     materialDataTexture.type = THREE.FloatType;
     materialDataTexture.needsUpdate = true; // r136
     voxelColorShader.material.uniforms.materialDataTexture.value = materialDataTexture;
