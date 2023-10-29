@@ -212,7 +212,7 @@ async function main() {
     }
     let materialInfo = [];
     for (let i = 0; i < materials.length; i++) {
-        materialInfo.push([
+        materialInfo.push(
             materials[i].metalness,
             materials[i].roughness,
             materials[i].mapIndex,
@@ -221,10 +221,10 @@ async function main() {
             0, // padding
             materials[i].color.r, materials[i].color.g, materials[i].color.b,
             0, // padding
-        ]);
+        );
     }
     while (materialInfo.length < 64) {
-        materialInfo.push([
+        materialInfo.push(
             0.0, // metalness
             0.0, // roughness
             -1, // mapIndex
@@ -233,7 +233,7 @@ async function main() {
             0,
             0.0, 0.0, 0.0, // emissive
             0,
-        ]);
+        );
     }
     // Convert maps to actual pixel data
     const TARGET_SIZE_X = 1024;
