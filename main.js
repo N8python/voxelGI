@@ -1043,22 +1043,14 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
             const indices = child.geometry.index.array;
             const posArray = child.geometry.attributes.position.array;
 
-            const e0 = meshMatrixArray[child.meshIndex * 16 + 0] = child.matrixWorld.elements[0];
-            const e1 = meshMatrixArray[child.meshIndex * 16 + 1] = child.matrixWorld.elements[1];
-            const e2 = meshMatrixArray[child.meshIndex * 16 + 2] = child.matrixWorld.elements[2];
-            const e3 = meshMatrixArray[child.meshIndex * 16 + 3] = child.matrixWorld.elements[3];
-            const e4 = meshMatrixArray[child.meshIndex * 16 + 4] = child.matrixWorld.elements[4];
-            const e5 = meshMatrixArray[child.meshIndex * 16 + 5] = child.matrixWorld.elements[5];
-            const e6 = meshMatrixArray[child.meshIndex * 16 + 6] = child.matrixWorld.elements[6];
-            const e7 = meshMatrixArray[child.meshIndex * 16 + 7] = child.matrixWorld.elements[7];
-            const e8 = meshMatrixArray[child.meshIndex * 16 + 8] = child.matrixWorld.elements[8];
-            const e9 = meshMatrixArray[child.meshIndex * 16 + 9] = child.matrixWorld.elements[9];
-            const e10 = meshMatrixArray[child.meshIndex * 16 + 10] = child.matrixWorld.elements[10];
-            const e11 = meshMatrixArray[child.meshIndex * 16 + 11] = child.matrixWorld.elements[11];
-            const e12 = meshMatrixArray[child.meshIndex * 16 + 12] = child.matrixWorld.elements[12];
-            const e13 = meshMatrixArray[child.meshIndex * 16 + 13] = child.matrixWorld.elements[13];
-            const e14 = meshMatrixArray[child.meshIndex * 16 + 14] = child.matrixWorld.elements[14];
-            const e15 = meshMatrixArray[child.meshIndex * 16 + 15] = child.matrixWorld.elements[15];
+            const transform = child.matrixWorld;
+            transform.toArray(meshMatrixArray, child.meshIndex * 16)
+            const [
+                e0, e1, e2, e3,
+                e4, e5, e6, e7,
+                e8, e9, e10, e11,
+                e12, e13, e14, e15
+            ] = transform.elements;
 
             const iLen = indices.length;
             for (let j = 0; j < iLen; j++) {
