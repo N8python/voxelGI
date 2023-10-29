@@ -212,22 +212,28 @@ async function main() {
     }
     let materialInfo = [];
     for (let i = 0; i < materials.length; i++) {
-        materialInfo.push({
-            metalness: materials[i].metalness,
-            roughness: materials[i].roughness,
-            emissive: new THREE.Vector3(materials[i].emissive.r, materials[i].emissive.g, materials[i].emissive.b),
-            mapIndex: materials[i].mapIndex,
-            color: new THREE.Vector3(materials[i].color.r, materials[i].color.g, materials[i].color.b)
-        });
+        materialInfo.push([
+            materials[i].metalness,
+            materials[i].roughness,
+            materials[i].mapIndex,
+            0, // padding
+            materials[i].emissive.r, materials[i].emissive.g, materials[i].emissive.b,
+            0, // padding
+            materials[i].color.r, materials[i].color.g, materials[i].color.b,
+            0, // padding
+        ]);
     }
     while (materialInfo.length < 64) {
-        materialInfo.push({
-            metalness: 0.0,
-            roughness: 0.0,
-            mapIndex: -1,
-            color: new THREE.Vector3(1.0, 1.0, 1.0),
-            emissive: new THREE.Vector3(0.0, 0.0, 0.0)
-        });
+        materialInfo.push([
+            0.0, // metalness
+            0.0, // roughness
+            -1, // mapIndex
+            0,
+            1.0, 1.0, 1.0, // color
+            0,
+            0.0, 0.0, 0.0, // emissive
+            0,
+        ]);
     }
     // Convert maps to actual pixel data
     const TARGET_SIZE_X = 1024;
@@ -334,9 +340,9 @@ async function main() {
             mapAtlas: { value: null },
             environment: { value: environment },
             meshIndexTex: { value: meshIndexTex },
-            materials: { value: null },
             mapSize: { value: TARGET_SIZE_X },
             time: { value: 0.0 },
+            materialDataTexture: { value: null },
             meshDataTexture: { value: null }
         },
         vertexShader: /*glsl*/ `
@@ -654,7 +660,7 @@ async function main() {
             vec3 color;
         };
         #define MAX_MATERIALS 64
-        uniform MaterialInfo materials[MAX_MATERIALS];
+        uniform sampler2D materialDataTexture;
         #define MAX_MESHES ${MAX_MESHES}
         uniform sampler2D meshDataTexture;
         float dot2( in vec3 v ) { return dot(v,v); }
@@ -789,11 +795,14 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
 
                 // Get texture
                 vec2 uv = vec2(interpolatedUV.x, interpolatedUV.y);
-                float metalness = materials[materialIndex].metalness;
-                float roughness = materials[materialIndex].roughness;
-                float mapIndex = materials[materialIndex].mapIndex;
-                vec3 color = materials[materialIndex].color;
-                vec3 emissive = materials[materialIndex].emissive;
+                vec4 materialInfo1 = texture(materialDataTexture, vec2((materialIndex + 0) / 64, 0));
+                vec4 materialInfo2 = texture(materialDataTexture, vec2((materialIndex + 1) / 64, 0));
+                vec4 materialInfo3 = texture(materialDataTexture, vec2((materialIndex + 2) / 64, 0));
+                float metalness = materialInfo1.r;
+                float roughness = materialInfo1.g;
+                float mapIndex = materialInfo1.b;
+                vec3 color = materialInfo2.rgb;
+                vec3 emissive = materialInfo3.rgb;
                 vec4 sampledTexel = vec4(1.0);
                 if (mapIndex >= 0.0) {
                     sampledTexel = textureLod(mapAtlas, vec3(uv, mapIndex), mipLevel);
@@ -839,10 +848,12 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         `
     }));
 
-    voxelColorShader.material.uniforms["materials"].value = materialInfo;
+    const materialDataTexture = new THREE.DataTexture(new Float32Array(64 * 12), 64 * 4, 3)
+    materialDataTexture.type = THREE.FloatType
+    materialDataTexture.needsUpdate = true; // r136
+    voxelColorShader.material.uniforms.materialDataTexture.value = materialDataTexture;
 
     const meshMatrixArray = new Float32Array(MAX_MESHES * 16);
-
     const identity = new THREE.Matrix4();
     for (let i = 0; i < MAX_MESHES; i ++) {
       identity.toArray(meshMatrixArray, i * 16);
