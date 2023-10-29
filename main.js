@@ -790,9 +790,9 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
 
                 // Get texture
                 vec2 uv = vec2(interpolatedUV.x, interpolatedUV.y);
-                vec4 materialInfo1 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 0, 0), 0);
-                vec4 materialInfo2 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 1, 0), 0);
-                vec4 materialInfo3 = texelFetch(meshDataTexture, ivec2(materialIndex * 3 + 2, 0), 0);
+                vec4 materialInfo1 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 0, 0), 0);
+                vec4 materialInfo2 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 1, 0), 0);
+                vec4 materialInfo3 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 2, 0), 0);
                 float metalness = materialInfo1.r;
                 float roughness = materialInfo1.g;
                 float mapIndex = materialInfo1.b;
