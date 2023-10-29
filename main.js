@@ -210,28 +210,38 @@ async function main() {
             materials[i].mapIndex = -1;
         }
     }
-    let materialInfo = [];
+    const materialInfo1 = [];
+    const materialInfo2 = [];
+    const materialInfo3 = [];
     const MAX_MATERIALS = 64
     for (let i = 0; i < MAX_MATERIALS; i++) {
         if (i >= materials.length) {
-            materialInfo.push(
+            materialInfo1.push(
                 0.0, // metalness
                 0.0, // roughness
                 -1, // mapIndex
                 0,
+            );
+            materialInfo2.push(
                 1.0, 1.0, 1.0, // color
                 0,
+            );
+            materialInfo3.push(
                 0.0, 0.0, 0.0, // emissive
                 0,
             );
         } else {
-            materialInfo.push(
+            materialInfo1.push(
                 materials[i].metalness,
                 materials[i].roughness,
                 materials[i].mapIndex,
                 0, // padding
+            );
+            materialInfo2.push(
                 materials[i].emissive.r, materials[i].emissive.g, materials[i].emissive.b,
                 0, // padding
+            );
+            materialInfo3.push(
                 materials[i].color.r, materials[i].color.g, materials[i].color.b,
                 0, // padding
             );
@@ -344,7 +354,9 @@ async function main() {
             meshIndexTex: { value: meshIndexTex },
             mapSize: { value: TARGET_SIZE_X },
             time: { value: 0.0 },
-            materialDataTexture: { value: null },
+            materialDataTexture1: { value: null },
+            materialDataTexture2: { value: null },
+            materialDataTexture3: { value: null },
             meshDataTexture: { value: null }
         },
         vertexShader: /*glsl*/ `
@@ -655,7 +667,9 @@ async function main() {
         uniform vec3 boxSize;
         varying vec2 vUv;
         #define MAX_MATERIALS ${MAX_MATERIALS}
-        uniform sampler2D materialDataTexture;
+        uniform sampler2D materialDataTexture1;
+        uniform sampler2D materialDataTexture2;
+        uniform sampler2D materialDataTexture3;
         #define MAX_MESHES ${MAX_MESHES}
         uniform sampler2D meshDataTexture;
         float dot2( in vec3 v ) { return dot(v,v); }
@@ -790,9 +804,9 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
 
                 // Get texture
                 vec2 uv = vec2(interpolatedUV.x, interpolatedUV.y);
-                vec4 materialInfo1 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 0, 0), 0);
-                vec4 materialInfo2 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 1, 0), 0);
-                vec4 materialInfo3 = texelFetch(materialDataTexture, ivec2(materialIndex * 3 + 2, 0), 0);
+                vec4 materialInfo1 = texelFetch(materialDataTexture1, ivec2(materialIndex, 0), 0);
+                vec4 materialInfo2 = texelFetch(materialDataTexture2, ivec2(materialIndex, 0), 0);
+                vec4 materialInfo3 = texelFetch(materialDataTexture3, ivec2(materialIndex, 0), 0);
                 float metalness = materialInfo1.r;
                 float roughness = materialInfo1.g;
                 float mapIndex = materialInfo1.b;
@@ -843,10 +857,20 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         `
     }));
 
-    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), MAX_MATERIALS * 3, 1);
-    materialDataTexture.type = THREE.FloatType;
-    materialDataTexture.needsUpdate = true; // r136
-    voxelColorShader.material.uniforms.materialDataTexture.value = materialDataTexture;
+    const materialDataTexture1 = new THREE.DataTexture(new Float32Array(materialInfo1), MAX_MATERIALS, 1);
+    materialDataTexture1.type = THREE.FloatType;
+    materialDataTexture1.needsUpdate = true; // r136
+    voxelColorShader.material.uniforms.materialDataTexture1.value = materialDataTexture1;
+
+    const materialDataTexture2 = new THREE.DataTexture(new Float32Array(materialInfo2), MAX_MATERIALS, 1);
+    materialDataTexture2.type = THREE.FloatType;
+    materialDataTexture2.needsUpdate = true; // r136
+    voxelColorShader.material.uniforms.materialDataTexture2.value = materialDataTexture2;
+
+    const materialDataTexture3 = new THREE.DataTexture(new Float32Array(materialInfo3), MAX_MATERIALS, 1);
+    materialDataTexture3.type = THREE.FloatType;
+    materialDataTexture3.needsUpdate = true; // r136
+    voxelColorShader.material.uniforms.materialDataTexture3.value = materialDataTexture2;
 
     const meshMatrixArray = new Float32Array(MAX_MESHES * 16);
     const identity = new THREE.Matrix4();
