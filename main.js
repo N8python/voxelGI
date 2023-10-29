@@ -652,13 +652,6 @@ async function main() {
         uniform vec3 boxCenter;
         uniform vec3 boxSize;
         varying vec2 vUv;
-        struct MaterialInfo {
-            float metalness;
-            float roughness;
-            float mapIndex;
-            vec3 emissive;
-            vec3 color;
-        };
         #define MAX_MATERIALS 64
         uniform sampler2D materialDataTexture;
         #define MAX_MESHES ${MAX_MESHES}
@@ -848,19 +841,19 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         `
     }));
 
-    const materialDataTexture = new THREE.DataTexture(new Float32Array(64 * 12), 64 * 4, 3)
-    materialDataTexture.type = THREE.FloatType
+    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), 64, 1);
+    materialDataTexture.type = THREE.FloatType;
     materialDataTexture.needsUpdate = true; // r136
     voxelColorShader.material.uniforms.materialDataTexture.value = materialDataTexture;
 
     const meshMatrixArray = new Float32Array(MAX_MESHES * 16);
     const identity = new THREE.Matrix4();
-    for (let i = 0; i < MAX_MESHES; i ++) {
+    for (let i = 0; i < MAX_MESHES; i++) {
       identity.toArray(meshMatrixArray, i * 16);
     }
 
-    const meshDataTexture = new THREE.DataTexture(meshMatrixArray, MAX_MESHES * 4, 4);
-    meshDataTexture.type = THREE.FloatType
+    const meshDataTexture = new THREE.DataTexture(meshMatrixArray, MAX_MESHES, 1);
+    meshDataTexture.type = THREE.FloatType;
     meshDataTexture.needsUpdate = true; // r136
     voxelColorShader.material.uniforms.meshDataTexture.value = meshDataTexture;
 
