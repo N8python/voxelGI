@@ -211,29 +211,31 @@ async function main() {
         }
     }
     let materialInfo = [];
-    for (let i = 0; i < materials.length; i++) {
-        materialInfo.push(
-            materials[i].metalness,
-            materials[i].roughness,
-            materials[i].mapIndex,
-            0, // padding
-            materials[i].emissive.r, materials[i].emissive.g, materials[i].emissive.b,
-            0, // padding
-            materials[i].color.r, materials[i].color.g, materials[i].color.b,
-            0, // padding
-        );
-    }
-    while (materialInfo.length < 64) {
-        materialInfo.push(
-            0.0, // metalness
-            0.0, // roughness
-            -1, // mapIndex
-            0,
-            1.0, 1.0, 1.0, // color
-            0,
-            0.0, 0.0, 0.0, // emissive
-            0,
-        );
+    const MAX_MATERIALS = 64
+    for (let i = 0; i < MAX_MATERIALS; i++) {
+        if (i >= materials.length) {
+            materialInfo.push(
+                0.0, // metalness
+                0.0, // roughness
+                -1, // mapIndex
+                0,
+                1.0, 1.0, 1.0, // color
+                0,
+                0.0, 0.0, 0.0, // emissive
+                0,
+            );
+        } else {
+            materialInfo.push(
+                materials[i].metalness,
+                materials[i].roughness,
+                materials[i].mapIndex,
+                0, // padding
+                materials[i].emissive.r, materials[i].emissive.g, materials[i].emissive.b,
+                0, // padding
+                materials[i].color.r, materials[i].color.g, materials[i].color.b,
+                0, // padding
+            );
+        }
     }
     // Convert maps to actual pixel data
     const TARGET_SIZE_X = 1024;
@@ -652,7 +654,7 @@ async function main() {
         uniform vec3 boxCenter;
         uniform vec3 boxSize;
         varying vec2 vUv;
-        #define MAX_MATERIALS 64
+        #define MAX_MATERIALS ${MAX_MATERIALS}
         uniform sampler2D materialDataTexture;
         #define MAX_MESHES ${MAX_MESHES}
         uniform sampler2D meshDataTexture;
@@ -841,7 +843,7 @@ ivec4 sample1Dimi( isampler2D s, int index, int size ) {
         `
     }));
 
-    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), 64 * 3, 1);
+    const materialDataTexture = new THREE.DataTexture(new Float32Array(materialInfo), MAX_MATERIALS * 3, 1);
     materialDataTexture.type = THREE.FloatType;
     materialDataTexture.needsUpdate = true; // r136
     voxelColorShader.material.uniforms.materialDataTexture.value = materialDataTexture;
